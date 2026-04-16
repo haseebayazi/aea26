@@ -77,5 +77,5 @@ echo "  ln -sfn $APP_DIR/public ~/public_html"
 
 echo ""
 echo "✓ Deployment complete!"
-echo "  Admin login: admin@alumni-awards.com / Alumni@2026"
-echo "  CHANGE THE PASSWORD immediately after first login."
+echo "  Admin login: admin@alumni-awards.com"
+echo "  ⚠  CHANGE THE DEFAULT PASSWORD immediately after first login (Admin → Users → Reset Password)."

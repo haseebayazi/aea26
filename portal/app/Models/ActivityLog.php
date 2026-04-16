@@ -23,6 +23,9 @@ class ActivityLog extends Model
     public static function record(string $action, $subject = null, array $details = []): void
     {
         $userId = auth()->id();
+        if (!$userId) {
+            \Illuminate\Support\Facades\Log::warning("ActivityLog::record called without authenticated user for action: {$action}");
+        }
         static::create([
             'user_id'      => $userId,
             'action'       => $action,

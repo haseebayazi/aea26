@@ -244,7 +244,8 @@ class StudentDataSeeder extends Seeder
 
                     // Determine file type from filename
                     $fileType = $this->guessFileType($filename);
-                    $mimeType = mime_content_type($filePath) ?: 'application/octet-stream';
+                    $finfo    = new \finfo(FILEINFO_MIME_TYPE);
+                    $mimeType = $finfo->file($filePath) ?: 'application/octet-stream';
 
                     StudentFile::firstOrCreate(
                         [

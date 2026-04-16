@@ -79,7 +79,10 @@
                         <a href="{{ route('admin.users.show', $user) }}" class="text-blue-600 hover:text-blue-800 text-xs">View</a>
                         <a href="{{ route('admin.users.edit', $user) }}" class="text-slate-500 hover:text-slate-700 text-xs">Edit</a>
                         @if($user->id !== auth()->id())
-                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST" onsubmit="return confirm('Delete user {{ addslashes($user->name) }}?')">
+                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST"
+                              data-name="{{ $user->name }}"
+                              onsubmit="return confirm('Delete user ' + this.dataset.name + '?')"
+                        >
                             @csrf @method('DELETE')
                             <button type="submit" class="text-red-500 hover:text-red-700 text-xs">Delete</button>
                         </form>

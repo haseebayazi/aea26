@@ -65,7 +65,22 @@ class FileController extends Controller
 
         // If file_path is absolute (seeded from data folder) and exists on disk
         if (str_starts_with($file->file_path, '/') && file_exists($file->file_path)) {
-            return response()->download($file->file_path, $file->original_name);
+            $realPath = realpath($file->file_path);
+            if (!$realPath) {
+                abort(404, 'File not found.');
+            }
+            // Security: ensure the path stays within storage/ or the data repo root
+            $allowedBases = array_filter([
+                realpath(storage_path('app')),
+                realpath(base_path('..')),  // data repo root (dev / seeded files)
+            ]);
+            $allowed = collect($allowedBases)->contains(
+                fn($base) => str_starts_with($realPath, $base . DIRECTORY_SEPARATOR)
+            );
+            if (!$allowed) {
+                abort(403);
+            }
+            return response()->download($realPath, $file->original_name);
         }
 
         // Storage-managed file

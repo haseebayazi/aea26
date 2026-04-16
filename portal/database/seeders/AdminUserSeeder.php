@@ -21,6 +21,7 @@ class AdminUserSeeder extends Seeder
             ]
         );
 
-        $this->command->info('Admin user seeded: admin@alumni-awards.com / Alumni@2026');
+        $this->command->info('Admin user seeded: admin@alumni-awards.com');
+        $this->command->warn('  ⚠  Default credentials are set. Change the password immediately after first login.');
     }
 }

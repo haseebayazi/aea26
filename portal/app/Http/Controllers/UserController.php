@@ -80,6 +80,11 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        // Prevent demoting another admin's role (only that admin can change their own role)
+        if ($user->role === 'admin' && $user->id !== Auth::id() && $request->input('role') !== 'admin') {
+            return back()->with('error', 'Cannot change the role of another administrator account.');
+        }
+
         $data = $request->validate([
             'name'      => 'required|string|max:255',
             'email'     => ['required', 'email', Rule::unique('users')->ignore($user->id)],

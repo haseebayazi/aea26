@@ -33,8 +33,10 @@ Route::middleware(['auth.portal'])->group(function () {
     Route::post('/students/{student}/review/complete', [ReviewController::class, 'complete'])->name('reviews.complete');
     Route::get('/my-reviews', [ReviewController::class, 'myReviews'])->name('reviews.mine');
 
-    // Files (accessible by all authenticated users)
-    Route::get('/files/{file}/download', [FileController::class, 'download'])->name('files.download');
+    // Files (accessible by all authenticated users; rate-limited to prevent scraping)
+    Route::get('/files/{file}/download', [FileController::class, 'download'])
+        ->name('files.download')
+        ->middleware('throttle:120,1');
 
     // ── Admin-only routes ────────────────────────────────────────────────────
     Route::middleware(['role:admin'])->group(function () {

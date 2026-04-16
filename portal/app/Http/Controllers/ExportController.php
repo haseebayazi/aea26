@@ -82,8 +82,14 @@ class ExportController extends Controller
             }
         }
 
-        $csvContent = implode("\n", array_map(fn($row) => implode(',', array_map(fn($cell) => '"' . str_replace('"', '""', (string)$cell) . '"', $row)), $rows));
-        $filename   = 'aea26-summary-' . now()->format('Ymd-His') . '.csv';
+        $tmpHandle = fopen('php://temp', 'r+');
+        foreach ($rows as $row) {
+            fputcsv($tmpHandle, array_map('strval', $row));
+        }
+        rewind($tmpHandle);
+        $csvContent = stream_get_contents($tmpHandle);
+        fclose($tmpHandle);
+        $filename = 'aea26-summary-' . now()->format('Ymd-His') . '.csv';
 
         return response($csvContent, 200, [
             'Content-Type'        => 'text/csv',
