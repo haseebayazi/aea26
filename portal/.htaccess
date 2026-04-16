@@ -1,0 +1,8 @@
+# Root-level .htaccess for cPanel deployments where
+# the app lives at ~/aea26-portal/ and public_html/alumni/ is a symlink.
+# If deploying to a subdomain/subdirectory, this redirects to public/.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} !^/public
+    RewriteRule ^(.*)$ /public/$1 [L,QSA]
+</IfModule>

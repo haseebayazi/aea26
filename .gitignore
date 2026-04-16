@@ -1,0 +1,11 @@
+.DS_Store
+__MACOSX/
+*.zip
+
+# Portal vendor/runtime (already in portal/.gitignore, belt+suspenders)
+portal/vendor/
+portal/node_modules/
+portal/.env
+portal/storage/app/students/
+portal/storage/app/imports/
+portal/database/database.sqlite
