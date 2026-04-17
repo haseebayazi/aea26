@@ -28,8 +28,21 @@
 
     <style>
         [x-cloak] { display: none !important; }
-        .sidebar-link { @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white transition-colors text-sm font-medium; }
-        .sidebar-link.active { @apply bg-blue-800 text-white; }
+        .nav-link {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 0.875rem; font-weight: 500;
+            color: #94a3b8; transition: background 150ms, color 150ms;
+            text-decoration: none;
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.07); color: #fff; }
+        .nav-link.active {
+            background: rgba(59,130,246,0.18);
+            color: #fff;
+            box-shadow: inset 3px 0 0 #60a5fa;
+        }
+        .nav-link.active .nav-icon { color: #93c5fd; }
+        .nav-icon { width: 17px; height: 17px; flex-shrink: 0; }
     </style>
 </head>
 <body class="h-full bg-slate-50" x-data="app()" x-cloak>
@@ -67,99 +80,120 @@
 
 <div class="flex h-full">
 
-    {{-- Sidebar -- fixed on mobile, static on desktop --}}
-    <aside class="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-slate-800 shrink-0
-                  -translate-x-full transition-transform duration-200 ease-in-out
+    {{-- Sidebar: fixed on mobile, static on desktop --}}
+    <aside class="fixed inset-y-0 left-0 z-50 flex flex-col w-64 shrink-0
+                  -translate-x-full transition-transform duration-300 ease-in-out
                   lg:relative lg:translate-x-0"
+           style="background: #0f172a;"
            :class="{ 'translate-x-0': sidebarOpen }">
 
-        {{-- Logo --}}
-        <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-700 shrink-0">
-            <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-white flex items-center justify-center">
-                <img src="{{ asset('images/comsats-logo.png') }}" alt="CUI"
-                     class="w-full h-full object-contain"
-                     onerror="this.parentElement.classList.replace('bg-white','bg-yellow-500'); this.parentElement.innerHTML='<span class=\'font-bold text-slate-900 text-sm\'>CUI</span>'">
+        {{-- Logo / Brand --}}
+        <div class="flex items-center gap-3 px-4 py-4 shrink-0" style="border-bottom: 1px solid rgba(255,255,255,0.07); background: rgba(0,0,0,0.25);">
+            <div class="w-9 h-9 rounded-lg overflow-hidden shrink-0 flex items-center justify-center" style="background:#fff;">
+                <img src="{{ asset('images/comsats-logo.png') }}" alt="CUI" style="width:100%;height:100%;object-fit:contain;"
+                     onerror="this.style.display='none'; this.parentElement.style.background='#d4a843'; this.parentElement.innerHTML='<span style=\'font-weight:800;color:#1e293b;font-size:12px;letter-spacing:.05em\'>CUI</span>'">
             </div>
-            <div>
+            <div class="min-w-0">
                 <p class="text-white font-semibold text-sm leading-tight">Alumni Excellence</p>
-                <p class="text-slate-400 text-xs">Awards 2026</p>
+                <p class="text-xs font-medium" style="color:#f59e0b;">Awards 2026</p>
             </div>
         </div>
 
-        {{-- Nav --}}
-        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        {{-- Navigation --}}
+        <nav class="flex-1 px-2 py-3 overflow-y-auto" style="scrollbar-width:thin;scrollbar-color:#334155 transparent;">
 
-            <a href="{{ route('dashboard') }}" @click="sidebarOpen = false"
-               class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                Dashboard
-            </a>
-
-            <a href="{{ route('students.index') }}" @click="sidebarOpen = false"
-               class="sidebar-link {{ request()->routeIs('students.*') ? 'active' : '' }}">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                Students
-                @php $totalStudents = auth()->user()->isAdmin() ? \App\Models\Student::count() : \App\Models\Student::whereIn('category_id', auth()->user()->assignedCategories->pluck('id'))->count(); @endphp
-                @if($totalStudents > 0)
-                <span class="ml-auto bg-blue-700 text-white text-xs px-2 py-0.5 rounded-full">{{ $totalStudents }}</span>
-                @endif
-            </a>
-
-            <a href="{{ route('reviews.mine') }}" @click="sidebarOpen = false"
-               class="sidebar-link {{ request()->routeIs('reviews.mine') ? 'active' : '' }}">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                My Reviews
-                @php $pendingCount = \App\Models\Review::forReviewer(auth()->id())->pending()->count(); @endphp
-                @if($pendingCount > 0)
-                <span class="ml-auto bg-yellow-500 text-slate-900 text-xs px-2 py-0.5 rounded-full">{{ $pendingCount }}</span>
-                @endif
-            </a>
-
-            @if(auth()->user()->isAdmin())
-            <div class="pt-3 pb-1">
-                <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Admin</p>
+            {{-- General --}}
+            <div style="margin-bottom:2px;">
+                <a href="{{ route('dashboard') }}" @click="sidebarOpen = false"
+                   class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span>Dashboard</span>
+                </a>
             </div>
 
-            <a href="{{ route('analytics.index') }}" @click="sidebarOpen = false"
-               class="sidebar-link {{ request()->routeIs('analytics.*') ? 'active' : '' }}">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                Analytics
-            </a>
+            <div style="margin-bottom:2px;">
+                <a href="{{ route('students.index') }}" @click="sidebarOpen = false"
+                   class="nav-link {{ request()->routeIs('students.*') ? 'active' : '' }}">
+                    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span class="flex-1">Students</span>
+                    @php $totalStudents = auth()->user()->isAdmin() ? \App\Models\Student::count() : \App\Models\Student::whereIn('category_id', auth()->user()->assignedCategories->pluck('id'))->count(); @endphp
+                    @if($totalStudents > 0)
+                    <span style="font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;background:rgba(59,130,246,0.25);color:#93c5fd;">{{ $totalStudents }}</span>
+                    @endif
+                </a>
+            </div>
 
-            <a href="{{ route('admin.import') }}" @click="sidebarOpen = false"
-               class="sidebar-link {{ request()->routeIs('admin.import*') ? 'active' : '' }}">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                Import Data
-            </a>
+            <div style="margin-bottom:2px;">
+                <a href="{{ route('reviews.mine') }}" @click="sidebarOpen = false"
+                   class="nav-link {{ request()->routeIs('reviews.mine') ? 'active' : '' }}">
+                    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                    <span class="flex-1">My Reviews</span>
+                    @php $pendingCount = \App\Models\Review::forReviewer(auth()->id())->pending()->count(); @endphp
+                    @if($pendingCount > 0)
+                    <span style="font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;background:#f59e0b;color:#1e293b;">{{ $pendingCount }}</span>
+                    @endif
+                </a>
+            </div>
 
-            <a href="{{ route('admin.users.index') }}" @click="sidebarOpen = false"
-               class="sidebar-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                Users
-            </a>
+            @if(auth()->user()->isAdmin())
+            {{-- Admin section divider --}}
+            <div style="padding: 16px 10px 6px;">
+                <p style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#475569;">Administration</p>
+            </div>
 
-            <a href="{{ route('admin.export') }}" @click="sidebarOpen = false"
-               class="sidebar-link {{ request()->routeIs('admin.export*') ? 'active' : '' }}">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                Export
-            </a>
+            <div style="margin-bottom:2px;">
+                <a href="{{ route('analytics.index') }}" @click="sidebarOpen = false"
+                   class="nav-link {{ request()->routeIs('analytics.*') ? 'active' : '' }}">
+                    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <span>Analytics</span>
+                </a>
+            </div>
+
+            <div style="margin-bottom:2px;">
+                <a href="{{ route('admin.users.index') }}" @click="sidebarOpen = false"
+                   class="nav-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
+                    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <span>Users</span>
+                </a>
+            </div>
+
+            <div style="margin-bottom:2px;">
+                <a href="{{ route('admin.import') }}" @click="sidebarOpen = false"
+                   class="nav-link {{ request()->routeIs('admin.import*') ? 'active' : '' }}">
+                    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span>Import Data</span>
+                </a>
+            </div>
+
+            <div style="margin-bottom:2px;">
+                <a href="{{ route('admin.export') }}" @click="sidebarOpen = false"
+                   class="nav-link {{ request()->routeIs('admin.export*') ? 'active' : '' }}">
+                    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Export</span>
+                </a>
+            </div>
             @endif
+
         </nav>
 
-        {{-- User info --}}
-        <div class="border-t border-slate-700 p-4">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-semibold">
+        {{-- User / Logout --}}
+        <div class="shrink-0 px-2 py-3" style="border-top: 1px solid rgba(255,255,255,0.07);">
+            <div class="flex items-center gap-3 px-2 py-2 rounded-lg" style="background:rgba(255,255,255,0.04);">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+                     style="background: linear-gradient(135deg,#3b82f6,#1d4ed8);">
                     {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-white text-sm font-medium truncate">{{ auth()->user()->name }}</p>
-                    <p class="text-slate-400 text-xs capitalize">{{ auth()->user()->role }}</p>
+                    <p class="text-white text-sm font-medium truncate leading-tight">{{ auth()->user()->name }}</p>
+                    <p class="text-xs capitalize" style="color:#64748b;">{{ auth()->user()->role }}</p>
                 </div>
-                <form action="{{ route('logout') }}" method="POST">
+                <form action="{{ route('logout') }}" method="POST" class="shrink-0">
                     @csrf
-                    <button type="submit" class="text-slate-400 hover:text-white transition-colors" title="Logout">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    <button type="submit" title="Sign out"
+                            style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:#64748b;border:none;background:transparent;cursor:pointer;transition:background 150ms,color 150ms;"
+                            onmouseover="this.style.background='rgba(239,68,68,0.15)';this.style.color='#f87171'"
+                            onmouseout="this.style.background='transparent';this.style.color='#64748b'">
+                        <svg style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                     </button>
                 </form>
             </div>
