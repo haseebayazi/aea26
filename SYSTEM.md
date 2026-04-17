@@ -247,7 +247,7 @@ php artisan config:cache && php artisan route:cache && php artisan view:cache
 php artisan optimize:clear
 ```
 
-Active branch: `claude/fix-ui-footer-updates-H0WEB`
+Active branch: `claude/fix-left-sidebar-ui-48Ki9`
 Target repo: `haseebayazi/aea26`
 
 ---
@@ -286,11 +286,20 @@ Full guides: see repo conversation history or `portal/deploy.sh` comments.
 
 ## UI & Branding Notes
 
-### Sidebar (mobile)
-The sidebar uses `fixed` positioning on mobile (`z-50`) and slides in with CSS
-`translate-x` transition. On desktop (`lg:`) it reverts to `relative` (normal
-flow). The overlay (`z-40`) sits below the sidebar. All nav links call
-`@click="sidebarOpen = false"` to close the drawer after navigation.
+### Sidebar
+The sidebar (`#0f172a` background) uses `fixed` positioning on mobile (`z-50`)
+and slides in with a 300 ms CSS `translate-x` transition. On desktop (`lg:`)
+it reverts to `relative` (normal flow). The overlay (`z-40`) sits below the
+sidebar. All nav links call `@click="sidebarOpen = false"` to close the drawer
+after navigation.
+
+Nav links use the `.nav-link` / `.nav-link.active` CSS classes (plain CSS in
+the `<style>` block — **no `@apply`**, which avoids CDN-Tailwind processing
+quirks). The active state renders a blue left-border accent
+(`box-shadow: inset 3px 0 0 #60a5fa`) plus a translucent blue background.
+Badge counts (Students, My Reviews) use inline `style` attributes for the
+same reason. The logout button in the user section uses JS `onmouseover` /
+`onmouseout` to achieve a red hover effect without Tailwind hover utilities.
 
 ### COMSATS Logo
 Place the logo file at `portal/public/images/comsats-logo.png`. The sidebar and
