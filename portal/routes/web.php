@@ -37,6 +37,9 @@ Route::middleware(['auth.portal'])->group(function () {
     Route::get('/files/{file}/download', [FileController::class, 'download'])
         ->name('files.download')
         ->middleware('throttle:120,1');
+    Route::get('/files/{file}/view', [FileController::class, 'view'])
+        ->name('files.view')
+        ->middleware('throttle:120,1');
 
     // ── Admin-only routes ────────────────────────────────────────────────────
     Route::middleware(['role:admin'])->group(function () {

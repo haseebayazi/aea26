@@ -56,23 +56,31 @@ class FileController extends Controller
 
     public function download(StudentFile $file)
     {
+        return $this->serveFile($file, 'attachment');
+    }
+
+    public function view(StudentFile $file)
+    {
+        return $this->serveFile($file, 'inline');
+    }
+
+    private function serveFile(StudentFile $file, string $disposition): \Symfony\Component\HttpFoundation\Response
+    {
         $user = Auth::user();
 
-        // Authorization
         if (!$user->isAdmin() && !$user->canAccessCategory($file->student->category_id)) {
             abort(403);
         }
 
-        // If file_path is absolute (seeded from data folder) and exists on disk
+        // Absolute path (seeded from data folder)
         if (str_starts_with($file->file_path, '/') && file_exists($file->file_path)) {
             $realPath = realpath($file->file_path);
             if (!$realPath) {
                 abort(404, 'File not found.');
             }
-            // Security: ensure the path stays within storage/ or the data repo root
             $allowedBases = array_filter([
                 realpath(storage_path('app')),
-                realpath(base_path('..')),  // data repo root (dev / seeded files)
+                realpath(base_path('..')),
             ]);
             $allowed = collect($allowedBases)->contains(
                 fn($base) => str_starts_with($realPath, $base . DIRECTORY_SEPARATOR)
@@ -80,7 +88,8 @@ class FileController extends Controller
             if (!$allowed) {
                 abort(403);
             }
-            return response()->download($realPath, $file->original_name);
+            $headers = ['Content-Disposition' => $disposition . '; filename="' . $file->original_name . '"'];
+            return response()->file($realPath, $headers);
         }
 
         // Storage-managed file
@@ -88,7 +97,9 @@ class FileController extends Controller
             abort(404, 'File not found.');
         }
 
-        return Storage::disk('local')->download($file->file_path, $file->original_name);
+        $storagePath = Storage::disk('local')->path($file->file_path);
+        $headers = ['Content-Disposition' => $disposition . '; filename="' . $file->original_name . '"'];
+        return response()->file($storagePath, $headers);
     }
 
     public function destroy(StudentFile $file)

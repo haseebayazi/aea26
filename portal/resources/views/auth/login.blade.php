@@ -15,8 +15,10 @@
 
         {{-- Header --}}
         <div class="bg-gradient-to-r from-blue-900 to-blue-800 px-8 py-8 text-center">
-            <div class="w-14 h-14 bg-yellow-500 rounded-xl mx-auto flex items-center justify-center mb-3">
-                <span class="font-black text-slate-900 text-xl">CUI</span>
+            <div class="w-16 h-16 rounded-xl mx-auto flex items-center justify-center mb-3 bg-white overflow-hidden">
+                <img src="{{ asset('images/comsats-logo.png') }}" alt="COMSATS University Islamabad"
+                     class="w-full h-full object-contain"
+                     onerror="this.parentElement.classList.add('bg-yellow-500'); this.parentElement.classList.remove('bg-white'); this.outerHTML='<span class=\'font-black text-slate-900 text-xl\'>CUI</span>'">
             </div>
             <h1 class="text-white font-bold text-xl">Alumni Excellence Awards</h1>
             <p class="text-blue-200 text-sm mt-1">Review Portal — 2026</p>
@@ -72,7 +74,7 @@
     </div>
 
     <p class="text-center text-slate-400 text-xs mt-4">
-        COMSATS University Islamabad — Registrar Secretariat
+        COMSATS University Islamabad &nbsp;|&nbsp; Office of Career Development &amp; Alumni Affairs
     </p>
 </div>
 

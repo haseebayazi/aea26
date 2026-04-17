@@ -112,8 +112,15 @@
                             <p class="text-xs font-medium text-slate-700 truncate">{{ $file->original_name }}</p>
                             <p class="text-xs text-slate-400">{{ ucfirst($file->file_type) }} · {{ $file->humanSize() }}</p>
                         </div>
-                        <a href="{{ route('files.download', $file) }}"
-                           class="text-xs text-blue-600 hover:underline shrink-0">Download</a>
+                        <div class="flex items-center gap-2 shrink-0">
+                            @if(in_array($file->mime_type, ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                                || str_ends_with(strtolower($file->original_name), '.pdf'))
+                            <a href="{{ route('files.view', $file) }}" target="_blank"
+                               class="text-xs text-emerald-600 hover:underline">View</a>
+                            @endif
+                            <a href="{{ route('files.download', $file) }}"
+                               class="text-xs text-blue-600 hover:underline">Download</a>
+                        </div>
                     </div>
                     @endforeach
                 </div>
@@ -255,9 +262,16 @@
                                             <p class="font-medium text-slate-700 text-xs">{{ $item->sub_indicator_label }}</p>
                                             <p class="text-slate-400 text-xs">max {{ $item->max_score }}</p>
                                             @if($selfBrief)
-                                            <p class="text-slate-400 text-xs mt-1 italic leading-relaxed line-clamp-2" title="{{ $selfBrief }}">
-                                                {{ Str::limit($selfBrief, 120) }}
-                                            </p>
+                                            <div x-data="{ exp: false }" class="mt-1">
+                                                <p class="text-slate-500 text-xs italic leading-relaxed"
+                                                   :class="exp ? '' : 'line-clamp-2'">{{ $selfBrief }}</p>
+                                                @if(strlen($selfBrief) > 100)
+                                                <button type="button" @click.stop="exp = !exp"
+                                                        class="text-blue-500 text-xs hover:underline mt-0.5 focus:outline-none">
+                                                    <span x-text="exp ? 'Show less ▲' : 'Read more ▼'"></span>
+                                                </button>
+                                                @endif
+                                            </div>
                                             @endif
                                         </td>
                                         <td class="px-3 py-3 text-center">

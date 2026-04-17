@@ -176,9 +176,9 @@ the other three files. It has `name_col=2`, `score_start=16` vs `name_col=1`,
 ### 3. Seeded files have absolute paths
 `StudentDataSeeder` stores absolute filesystem paths in `student_files.file_path`
 (e.g. `/home/user/aea26/1-Professional Achievement/1-Dr. Kalsoom/cv.pdf`).
-`FileController::download()` validates these via `realpath()` + allowed-base
-containment before serving. On production, use **Bulk Upload ZIP** instead to
-get relative `storage/`-managed paths.
+`FileController::download()` and `FileController::view()` both validate these via
+`realpath()` + allowed-base containment before serving. On production, use
+**Bulk Upload ZIP** instead to get relative `storage/`-managed paths.
 
 ### 4. `reviewer-agreement` filtering is PHP-side
 SQLite doesn't support `HAVING` on virtual `withCount()` columns.
@@ -247,7 +247,7 @@ php artisan config:cache && php artisan route:cache && php artisan view:cache
 php artisan optimize:clear
 ```
 
-Active branch: `claude/build-alumni-award-portal-VMmVN`
+Active branch: `claude/fix-ui-footer-updates-H0WEB`
 Target repo: `haseebayazi/aea26`
 
 ---
@@ -278,6 +278,42 @@ Full guides: see repo conversation history or `portal/deploy.sh` comments.
 - File downloads validate `realpath()` is within `storage/app` or repo root — never serve arbitrary paths
 - Login rate-limited: 5 attempts per 300 s window (`AuthController`)
 - Admin role changes to other admin accounts are blocked (`UserController::update`)
-- All forms include `@csrf`; file downloads are throttled `120 req/min`
+- All forms include `@csrf`; file downloads and views are throttled `120 req/min`
 - `SESSION_ENCRYPT=true` in production `.env.example`
 - `APP_DEBUG=false` in production — never commit `.env` to git
+
+---
+
+## UI & Branding Notes
+
+### Sidebar (mobile)
+The sidebar uses `fixed` positioning on mobile (`z-50`) and slides in with CSS
+`translate-x` transition. On desktop (`lg:`) it reverts to `relative` (normal
+flow). The overlay (`z-40`) sits below the sidebar. All nav links call
+`@click="sidebarOpen = false"` to close the drawer after navigation.
+
+### COMSATS Logo
+Place the logo file at `portal/public/images/comsats-logo.png`. The sidebar and
+login page reference `asset('images/comsats-logo.png')` and fall back to a
+"CUI" badge via an `onerror` handler if the file is missing.
+
+### File Viewing (inline)
+`FileController::view()` serves files with `Content-Disposition: inline` so the
+browser renders them in-tab (PDFs, images). The student profile shows a **View**
+button (opens in a new tab) for PDFs and images, alongside the existing
+**Download** button. Route: `GET /files/{file}/view` → `files.view`.
+
+### Indicator / Self-Assessment Text
+Student profile rubric rows display the applicant's self-assessment remarks with
+an Alpine.js expand/collapse toggle ("Read more ▼" / "Show less ▲"). The toggle
+only renders when the text exceeds 100 characters.
+
+### Dashboard Charts
+Admin dashboard chart canvases are wrapped in `<div style="height:260px">` so
+Chart.js (`maintainAspectRatio: false`) fills the container without growing
+indefinitely. Analytics page charts already used this pattern.
+
+### Footer / Branding
+Footer text updated from "Registrar Secretariat" to
+"Office of Career Development & Alumni Affairs" across `layouts/app.blade.php`
+and `auth/login.blade.php`.
