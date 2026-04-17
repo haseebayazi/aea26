@@ -29,13 +29,17 @@
     {{-- Completion by reviewer --}}
     <div class="bg-white rounded-xl border border-slate-200 p-5">
         <h2 class="font-semibold text-slate-800 mb-4">Reviewer Progress</h2>
-        <canvas id="reviewerChart" height="250"></canvas>
+        <div class="relative" style="height:260px">
+            <canvas id="reviewerChart"></canvas>
+        </div>
     </div>
 
     {{-- Completion by category --}}
     <div class="bg-white rounded-xl border border-slate-200 p-5">
         <h2 class="font-semibold text-slate-800 mb-4">Students by Category</h2>
-        <canvas id="categoryChart" height="250"></canvas>
+        <div class="relative" style="height:260px">
+            <canvas id="categoryChart"></canvas>
+        </div>
     </div>
 </div>
 

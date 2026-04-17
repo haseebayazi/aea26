@@ -35,7 +35,7 @@
 <body class="h-full bg-slate-50" x-data="app()" x-cloak>
 
 {{-- Toast container --}}
-<div class="fixed top-4 right-4 z-50 space-y-2" id="toastContainer">
+<div class="fixed top-4 right-4 z-[60] space-y-2" id="toastContainer">
     @if(session('success'))
     <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
          x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
@@ -66,13 +66,20 @@
 </div>
 
 <div class="flex h-full">
-    {{-- Sidebar --}}
-    <aside class="hidden lg:flex lg:flex-col w-64 bg-slate-800 shrink-0"
-           :class="sidebarOpen ? 'flex' : ''">
+
+    {{-- Sidebar -- fixed on mobile, static on desktop --}}
+    <aside class="fixed inset-y-0 left-0 z-50 flex flex-col w-64 bg-slate-800 shrink-0
+                  -translate-x-full transition-transform duration-200 ease-in-out
+                  lg:relative lg:translate-x-0"
+           :class="{ 'translate-x-0': sidebarOpen }">
 
         {{-- Logo --}}
-        <div class="flex items-center gap-3 px-5 py-5 border-b border-slate-700">
-            <div class="w-9 h-9 bg-yellow-500 rounded-lg flex items-center justify-center font-bold text-slate-900 text-sm">CUI</div>
+        <div class="flex items-center gap-3 px-5 py-4 border-b border-slate-700 shrink-0">
+            <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-white flex items-center justify-center">
+                <img src="{{ asset('images/comsats-logo.png') }}" alt="CUI"
+                     class="w-full h-full object-contain"
+                     onerror="this.parentElement.classList.replace('bg-white','bg-yellow-500'); this.parentElement.innerHTML='<span class=\'font-bold text-slate-900 text-sm\'>CUI</span>'">
+            </div>
             <div>
                 <p class="text-white font-semibold text-sm leading-tight">Alumni Excellence</p>
                 <p class="text-slate-400 text-xs">Awards 2026</p>
@@ -82,13 +89,13 @@
         {{-- Nav --}}
         <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
 
-            <a href="{{ route('dashboard') }}"
+            <a href="{{ route('dashboard') }}" @click="sidebarOpen = false"
                class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 Dashboard
             </a>
 
-            <a href="{{ route('students.index') }}"
+            <a href="{{ route('students.index') }}" @click="sidebarOpen = false"
                class="sidebar-link {{ request()->routeIs('students.*') ? 'active' : '' }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 Students
@@ -98,7 +105,7 @@
                 @endif
             </a>
 
-            <a href="{{ route('reviews.mine') }}"
+            <a href="{{ route('reviews.mine') }}" @click="sidebarOpen = false"
                class="sidebar-link {{ request()->routeIs('reviews.mine') ? 'active' : '' }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                 My Reviews
@@ -113,25 +120,25 @@
                 <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Admin</p>
             </div>
 
-            <a href="{{ route('analytics.index') }}"
+            <a href="{{ route('analytics.index') }}" @click="sidebarOpen = false"
                class="sidebar-link {{ request()->routeIs('analytics.*') ? 'active' : '' }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                 Analytics
             </a>
 
-            <a href="{{ route('admin.import') }}"
+            <a href="{{ route('admin.import') }}" @click="sidebarOpen = false"
                class="sidebar-link {{ request()->routeIs('admin.import*') ? 'active' : '' }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                 Import Data
             </a>
 
-            <a href="{{ route('admin.users.index') }}"
+            <a href="{{ route('admin.users.index') }}" @click="sidebarOpen = false"
                class="sidebar-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                 Users
             </a>
 
-            <a href="{{ route('admin.export') }}"
+            <a href="{{ route('admin.export') }}" @click="sidebarOpen = false"
                class="sidebar-link {{ request()->routeIs('admin.export*') ? 'active' : '' }}">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 Export
@@ -159,8 +166,8 @@
         </div>
     </aside>
 
-    {{-- Main content --}}
-    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    {{-- Main content — full width on mobile (sidebar is fixed), flex-1 on desktop --}}
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden w-full">
 
         {{-- Top bar --}}
         <header class="bg-white border-b border-slate-200 px-4 lg:px-6 py-3 flex items-center gap-4 shrink-0">
@@ -193,7 +200,7 @@
 
         {{-- Footer --}}
         <footer class="shrink-0 border-t border-slate-200 bg-white px-6 py-3 text-center text-xs text-slate-500">
-            COMSATS University Islamabad — Registrar Secretariat &nbsp;|&nbsp; CUI-Reg/Notif-06/26/14
+            COMSATS University Islamabad &nbsp;|&nbsp; Office of Career Development &amp; Alumni Affairs &nbsp;|&nbsp; CUI-Reg/Notif-06/26/14
         </footer>
     </div>
 </div>
