@@ -99,13 +99,9 @@
             @endif
 
             {{-- Files --}}
-            @auth
-            @php $isAdmin = auth()->user()->isAdmin(); @endphp
-            @endauth
-            @if($student->files->isNotEmpty() || $student->cv_path || $student->citation_path || (isset($isAdmin) && $isAdmin))
+            @if($student->files->isNotEmpty() || $student->cv_path || $student->citation_path)
             <div class="bg-white rounded-xl border border-slate-200 p-5">
                 <h3 class="text-sm font-semibold text-slate-700 mb-3">Documents</h3>
-                @if($student->files->isNotEmpty())
                 <div class="space-y-2">
                     @foreach($student->files as $file)
                     <div class="flex items-center gap-3">
@@ -128,9 +124,8 @@
                     </div>
                     @endforeach
                 </div>
-                @endif
                 @auth @if(auth()->user()->isAdmin())
-                <div class="{{ $student->files->isNotEmpty() ? 'mt-3 pt-3 border-t border-slate-100' : '' }}">
+                <div class="mt-3 pt-3 border-t border-slate-100">
                     <form action="{{ route('students.files.upload', $student) }}" method="POST" enctype="multipart/form-data" class="flex gap-2">
                         @csrf
                         <input type="file" name="file" class="text-xs border border-slate-200 rounded p-1 flex-1 min-w-0">
