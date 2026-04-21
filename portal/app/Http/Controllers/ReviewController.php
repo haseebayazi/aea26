@@ -72,11 +72,22 @@ class ReviewController extends Controller
             $review->update(['status' => 'in_progress', 'started_at' => now()]);
         }
 
+        // Don't autosave over a completed review
+        if ($review->isCompleted()) {
+            return response()->json(['ok' => true, 'saved_at' => now()->format('H:i:s')]);
+        }
+
         $rubricItems = RubricItem::caac()->get()->keyBy('id');
         $scores      = $request->input('scores', []);
         $remarks     = $request->input('remarks', []);
 
         DB::transaction(function () use ($review, $scores, $remarks, $rubricItems) {
+            // Re-check under a row lock to block concurrent complete() requests
+            $locked = Review::lockForUpdate()->find($review->id);
+            if ($locked->isCompleted()) {
+                return;
+            }
+
             foreach ($scores as $rubricItemId => $score) {
                 $rubricItem = $rubricItems->get($rubricItemId);
                 if (!$rubricItem) continue;
@@ -134,6 +145,12 @@ class ReviewController extends Controller
         }
 
         DB::transaction(function () use ($review, $scores, $remarks, $rubricItems, $request) {
+            // Lock the review row so concurrent autosave() requests block until we finish
+            $locked = Review::lockForUpdate()->find($review->id);
+            if ($locked->isCompleted()) {
+                return;
+            }
+
             foreach ($rubricItems as $item) {
                 $scoreVal = min(max((float) $scores[$item->id], 0), $item->max_score);
                 ReviewScore::updateOrCreate(
@@ -149,11 +166,23 @@ class ReviewController extends Controller
             ]);
         });
 
-        ActivityLog::record('review_completed', $review, [
-            'student_id'   => $student->id,
-            'student_name' => $student->name,
-            'total_score'  => $review->fresh()->totalScore(),
-        ]);
+        // Reload to confirm the transaction committed before logging
+        $review->refresh();
+
+        if ($review->isCompleted()) {
+            try {
+                ActivityLog::record('review_completed', $review, [
+                    'student_id'   => $student->id,
+                    'student_name' => $student->name,
+                    'total_score'  => $review->totalScore(),
+                ]);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('ActivityLog failed after review completion', [
+                    'review_id' => $review->id,
+                    'error'     => $e->getMessage(),
+                ]);
+            }
+        }
 
         return redirect()->route('students.index')
             ->with('success', "Review for {$student->name} completed successfully.");
