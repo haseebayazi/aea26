@@ -465,6 +465,7 @@ function reviewForm() {
     return {
         showConfirm: false,
         autosaveTimer: null,
+        autosaveAbort: null,
         autosaveUrl: '{{ route("reviews.autosave", $student) }}',
         csrfToken: '{{ csrf_token() }}',
 
@@ -512,6 +513,10 @@ function reviewForm() {
         },
 
         async autosave() {
+            if (this.autosaveAbort) this.autosaveAbort.abort();
+            const controller = new AbortController();
+            this.autosaveAbort = controller;
+
             const form = document.getElementById('reviewForm');
             const data = new FormData(form);
             const payload = { _token: this.csrfToken, scores: {}, remarks: {} };
@@ -529,12 +534,14 @@ function reviewForm() {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrfToken },
                     body: JSON.stringify(payload),
+                    signal: controller.signal,
                 });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const json = await res.json();
                 const el = document.getElementById('autosaveStatus');
                 if (el) el.textContent = 'Auto-saved at ' + (json.saved_at || '');
             } catch (e) {
+                if (e.name === 'AbortError') return;
                 const el = document.getElementById('autosaveStatus');
                 if (el) el.textContent = 'Auto-save failed — changes not saved';
                 console.warn('Autosave failed', e);
@@ -562,6 +569,9 @@ function reviewForm() {
         },
 
         submitComplete() {
+            // Cancel any pending autosave timer and abort any in-flight autosave fetch
+            clearTimeout(this.autosaveTimer);
+            if (this.autosaveAbort) this.autosaveAbort.abort();
             this.showConfirm = false;
             // Change form action to complete endpoint
             const form = document.getElementById('reviewForm');
