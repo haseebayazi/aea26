@@ -199,8 +199,8 @@ class StudentDataSeeder extends Seeder
         $folderMap = [
             'professional-achievement'    => '1-Professional Achievement',
             'distinguished-young-alumni'  => '2-Distinguished Young Alumni',
-            'innovation-entrepreneurship' => '3-Innovation & Entrepreneurship',
-            'social-impact-community'     => '4-Social Impact & Community Service',
+            'innovation-entrepreneurship' => '3-Innovation &amp; Entrepreneurship',
+            'social-impact-community'     => '4-Social Impact &amp; Community Service',
         ];
 
         $linked = 0;
