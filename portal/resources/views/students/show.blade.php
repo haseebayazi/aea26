@@ -508,7 +508,7 @@ function reviewForm() {
 
         scheduleAutosave() {
             clearTimeout(this.autosaveTimer);
-            this.autosaveTimer = setTimeout(() => this.autosave(), 30000);
+            this.autosaveTimer = setTimeout(() => this.autosave(), 3000);
         },
 
         async autosave() {
@@ -530,10 +530,13 @@ function reviewForm() {
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': this.csrfToken },
                     body: JSON.stringify(payload),
                 });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
                 const json = await res.json();
                 const el = document.getElementById('autosaveStatus');
                 if (el) el.textContent = 'Auto-saved at ' + (json.saved_at || '');
             } catch (e) {
+                const el = document.getElementById('autosaveStatus');
+                if (el) el.textContent = 'Auto-save failed — changes not saved';
                 console.warn('Autosave failed', e);
             }
         },

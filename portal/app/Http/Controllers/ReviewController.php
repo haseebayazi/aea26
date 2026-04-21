@@ -108,9 +108,10 @@ class ReviewController extends Controller
             'scores'          => 'required|array',
         ]);
 
-        $review = Review::where('student_id', $student->id)
-            ->where('reviewer_id', Auth::id())
-            ->firstOrFail();
+        $review = Review::firstOrCreate(
+            ['student_id' => $student->id, 'reviewer_id' => Auth::id()],
+            ['status' => 'in_progress', 'started_at' => now()]
+        );
 
         if ($review->isCompleted()) {
             return back()->with('error', 'This review is already completed.');
