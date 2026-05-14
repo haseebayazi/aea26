@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Review;
 use App\Models\RubricItem;
-use App\Models\SelfScore;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -118,40 +116,5 @@ class StudentController extends Controller
             'myReview', 'myScoreMap', 'allReviews',
             'prevStudentId', 'nextStudentId', 'positionLabel'
         ));
-    }
-
-    public function updateSelfScores(Request $request, Student $student)
-    {
-        $rubricItems = RubricItem::caac()->ordered()->get();
-
-        $validated = $request->validate([
-            'self_scores'           => ['required', 'array'],
-            'self_scores.*.score'   => ['required', 'numeric', 'min:0'],
-            'self_scores.*.remarks' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $before = $student->selfScores->keyBy('rubric_item_id')
-            ->map(fn($s) => $s->score)
-            ->toArray();
-
-        foreach ($rubricItems as $item) {
-            $data = $validated['self_scores'][$item->id] ?? null;
-            if ($data === null) continue;
-
-            $score = min((float) $data['score'], $item->max_score);
-
-            SelfScore::updateOrCreate(
-                ['student_id' => $student->id, 'rubric_item_id' => $item->id],
-                ['score' => $score, 'remarks' => $data['remarks'] ?? null]
-            );
-        }
-
-        ActivityLog::record('admin_edit_self_scores', $student, [
-            'before' => $before,
-            'editor' => Auth::user()->name,
-        ]);
-
-        return redirect()->route('students.show', $student)
-            ->with('success', 'Candidate marks updated successfully.');
     }
 }

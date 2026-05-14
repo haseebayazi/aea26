@@ -180,70 +180,6 @@
                 </div>
             </div>
 
-            {{-- Admin: Edit Candidate Marks --}}
-            @auth @if(auth()->user()->isAdmin())
-            <div class="bg-white rounded-xl border border-amber-200 overflow-hidden" x-data="{ editOpen: false }">
-                <button type="button" @click="editOpen = !editOpen"
-                        class="w-full flex items-center justify-between px-5 py-3 text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 transition-colors">
-                    <span class="flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                        Edit Candidate Marks
-                    </span>
-                    <svg class="w-4 h-4 text-amber-600 transition-transform" :class="editOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </button>
-
-                <div x-show="editOpen" x-transition class="border-t border-amber-100">
-                    <form action="{{ route('admin.students.self-scores', $student) }}" method="POST" class="p-4 space-y-4">
-                        @csrf
-                        @method('PUT')
-
-                        @php $editRubricConf = config('rubric.caac'); @endphp
-                        @foreach($editRubricConf as $dimKey => $dim)
-                        @php
-                            $dimRubricItems = $rubricItems->filter(fn($i) => $i->dimension === $dimKey)->values();
-                        @endphp
-                        <div>
-                            <p class="text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">{{ $dim['label'] }}</p>
-                            <div class="space-y-2">
-                                @foreach($dimRubricItems as $item)
-                                @php
-                                    $existing = $selfScoreMap->get($item->id);
-                                    $currentScore   = $existing?->score ?? 0;
-                                    $currentRemarks = $existing?->remarks ?? '';
-                                @endphp
-                                <div class="bg-slate-50 rounded-lg p-3">
-                                    <div class="flex items-center justify-between mb-1.5">
-                                        <p class="text-xs font-medium text-slate-700 leading-tight">{{ $item->sub_indicator_label }}</p>
-                                        <span class="text-xs text-slate-400 shrink-0 ml-2">max {{ $item->max_score }}</span>
-                                    </div>
-                                    <div class="flex gap-2">
-                                        <input type="number"
-                                               name="self_scores[{{ $item->id }}][score]"
-                                               value="{{ $currentScore }}"
-                                               min="0" max="{{ $item->max_score }}" step="0.5"
-                                               class="w-20 text-center border border-slate-200 rounded-lg px-2 py-1 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-400"
-                                               required>
-                                        <input type="text"
-                                               name="self_scores[{{ $item->id }}][remarks]"
-                                               value="{{ $currentRemarks }}"
-                                               placeholder="Remarks (optional)"
-                                               class="flex-1 border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400">
-                                    </div>
-                                </div>
-                                @endforeach
-                            </div>
-                        </div>
-                        @endforeach
-
-                        <button type="submit"
-                                class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors">
-                            Save Candidate Marks
-                        </button>
-                    </form>
-                </div>
-            </div>
-            @endif @endauth
-
         </div>{{-- end left --}}
 
         {{-- RIGHT: Review Form (60%) --}}
@@ -464,42 +400,109 @@
                 <div class="px-5 py-3 border-b border-slate-100">
                     <h3 class="font-semibold text-slate-800 text-sm">All Reviewer Scores</h3>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs">
-                        <thead>
-                            <tr class="bg-slate-50">
-                                <th class="text-left px-4 py-2 text-slate-500">Reviewer</th>
-                                <th class="text-center px-3 py-2 text-slate-500">Status</th>
-                                <th class="text-right px-4 py-2 text-slate-500">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($allReviews as $rev)
-                            <tr class="border-b border-slate-50">
-                                <td class="px-4 py-2 font-medium text-slate-700">{{ $rev->reviewer->name }}</td>
-                                <td class="px-3 py-2 text-center">
-                                    <span class="px-2 py-0.5 rounded-full
-                                        @if($rev->status === 'completed') bg-green-100 text-green-700
-                                        @elseif($rev->status === 'in_progress') bg-yellow-100 text-yellow-700
-                                        @else bg-slate-100 text-slate-500 @endif">
-                                        {{ ucfirst(str_replace('_', ' ', $rev->status)) }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-2 text-right font-semibold text-slate-700">
-                                    {{ $rev->status === 'completed' ? number_format($rev->totalScore(), 1) : '—' }}
-                                </td>
-                            </tr>
+
+                @foreach($allReviews as $rev)
+                @php $revScoreMap = $rev->scores->keyBy('rubric_item_id'); @endphp
+                <div class="border-b border-slate-100 last:border-0" x-data="{ editOpen: false }">
+
+                    {{-- Row summary --}}
+                    <div class="flex items-center justify-between px-5 py-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="font-medium text-slate-700 text-sm truncate">{{ $rev->reviewer->name }}</span>
+                            <span class="shrink-0 px-2 py-0.5 rounded-full text-xs
+                                @if($rev->status === 'completed') bg-green-100 text-green-700
+                                @elseif($rev->status === 'in_progress') bg-yellow-100 text-yellow-700
+                                @else bg-slate-100 text-slate-500 @endif">
+                                {{ ucfirst(str_replace('_', ' ', $rev->status)) }}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            <span class="text-sm font-semibold text-slate-700">
+                                {{ $rev->scores->isNotEmpty() ? number_format($rev->scores->sum('score'), 1) : '—' }}
+                            </span>
+                            <button type="button" @click="editOpen = !editOpen"
+                                    class="text-xs px-2.5 py-1 rounded-lg border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                <span x-text="editOpen ? 'Cancel' : 'Edit'"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Inline edit form --}}
+                    <div x-show="editOpen" x-transition class="border-t border-amber-100 bg-amber-50">
+                        <form action="{{ route('admin.reviews.update', $rev) }}" method="POST" class="p-4 space-y-4">
+                            @csrf
+                            @method('PUT')
+
+                            @foreach($rubricConfig as $dimKey => $dim)
+                            @php
+                                $dimRubricItems = $rubricItems->filter(fn($i) => $i->dimension === $dimKey)->values();
+                            @endphp
+                            <div>
+                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">{{ $dim['label'] }}</p>
+                                <div class="overflow-x-auto">
+                                    <table class="w-full text-xs">
+                                        <thead>
+                                            <tr class="text-slate-400">
+                                                <th class="text-left pb-1 font-medium">Indicator</th>
+                                                <th class="text-center pb-1 font-medium w-16">Max</th>
+                                                <th class="text-center pb-1 font-medium w-20">Score</th>
+                                                <th class="text-left pb-1 font-medium pl-2">Remarks</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($dimRubricItems as $item)
+                                            @php
+                                                $rs = $revScoreMap->get($item->id);
+                                            @endphp
+                                            <tr class="border-t border-amber-100">
+                                                <td class="py-1.5 pr-2 text-slate-700 font-medium">{{ $item->sub_indicator_label }}</td>
+                                                <td class="py-1.5 text-center text-slate-400">{{ $item->max_score }}</td>
+                                                <td class="py-1.5 text-center">
+                                                    <input type="number"
+                                                           name="scores[{{ $item->id }}]"
+                                                           value="{{ $rs?->score ?? '' }}"
+                                                           min="0" max="{{ $item->max_score }}" step="0.5"
+                                                           class="w-16 text-center border border-slate-300 rounded px-1 py-1 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                </td>
+                                                <td class="py-1.5 pl-2">
+                                                    <input type="text"
+                                                           name="remarks[{{ $item->id }}]"
+                                                           value="{{ $rs?->remarks ?? '' }}"
+                                                           placeholder="Optional…"
+                                                           class="w-full border border-slate-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                             @endforeach
-                            @if($allReviews->where('status', 'completed')->count() > 1)
-                            @php $avgTotal = $allReviews->where('status','completed')->map(fn($r)=>$r->totalScore())->avg(); @endphp
-                            <tr class="bg-blue-50">
-                                <td class="px-4 py-2 font-bold text-blue-800">Average</td>
-                                <td></td>
-                                <td class="px-4 py-2 text-right font-bold text-blue-800">{{ number_format($avgTotal, 1) }}</td>
-                            </tr>
-                            @endif
-                        </tbody>
-                    </table>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Overall Remarks</label>
+                                <textarea name="overall_remarks" rows="3"
+                                          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
+                                          placeholder="Overall assessment remarks…">{{ $rev->overall_remarks }}</textarea>
+                            </div>
+
+                            <button type="submit"
+                                    class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg text-xs transition-colors">
+                                Save Changes for {{ $rev->reviewer->name }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                @endforeach
+
+                @if($allReviews->filter(fn($r) => $r->scores->isNotEmpty())->count() > 1)
+                @php $avgTotal = $allReviews->filter(fn($r) => $r->scores->isNotEmpty())->map(fn($r) => $r->scores->sum('score'))->avg(); @endphp
+                <div class="flex justify-between items-center px-5 py-3 bg-blue-50">
+                    <span class="text-xs font-bold text-blue-800">Average</span>
+                    <span class="text-sm font-bold text-blue-800">{{ number_format($avgTotal, 1) }}</span>
+                </div>
+                @endif
                 </div>
             </div>
             @endif
