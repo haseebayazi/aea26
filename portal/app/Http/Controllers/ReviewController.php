@@ -223,6 +223,48 @@ class ReviewController extends Controller
             ->with('success', 'Review saved as draft.');
     }
 
+    public function adminUpdate(Request $request, Review $review)
+    {
+        $review->load(['student', 'reviewer']);
+
+        $rubricItems = RubricItem::caac()->ordered()->get();
+        $scores  = $request->input('scores', []);
+        $remarks = $request->input('remarks', []);
+
+        $before = $review->scores->keyBy('rubric_item_id')
+            ->map(fn($s) => $s->score)
+            ->toArray();
+
+        DB::transaction(function () use ($review, $scores, $remarks, $rubricItems) {
+            foreach ($rubricItems as $item) {
+                if (!array_key_exists($item->id, $scores)) continue;
+
+                $scoreVal = is_numeric($scores[$item->id])
+                    ? min(max((float) $scores[$item->id], 0), $item->max_score)
+                    : null;
+
+                ReviewScore::updateOrCreate(
+                    ['review_id' => $review->id, 'rubric_item_id' => $item->id],
+                    ['score' => $scoreVal, 'remarks' => $remarks[$item->id] ?? null]
+                );
+            }
+        });
+
+        if ($request->filled('overall_remarks')) {
+            $review->update(['overall_remarks' => $request->input('overall_remarks')]);
+        }
+
+        ActivityLog::record('admin_edit_review_scores', $review, [
+            'reviewer'  => $review->reviewer->name,
+            'student'   => $review->student->name,
+            'editor'    => Auth::user()->name,
+            'before'    => $before,
+        ]);
+
+        return redirect()->route('students.show', $review->student_id)
+            ->with('success', "Scores for {$review->reviewer->name} updated successfully.");
+    }
+
     private function authorizeStudentAccess(Student $student): void
     {
         $user = Auth::user();
