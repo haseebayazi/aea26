@@ -4,6 +4,14 @@
 @section('content')
 <div x-data="reviewForm()" x-init="init()" @keydown.left.window="prevStudent()" @keydown.right.window="nextStudent()">
 
+    {{-- Flash messages --}}
+    @if(session('success'))
+    <div class="mb-4 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800 flex items-center gap-2">
+        <svg class="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        {{ session('success') }}
+    </div>
+    @endif
+
     {{-- Navigation --}}
     <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-3 text-sm">
@@ -171,6 +179,70 @@
                     <span>{{ number_format($selfScoreMap->sum('score'), 1) }}/100</span>
                 </div>
             </div>
+
+            {{-- Admin: Edit Candidate Marks --}}
+            @auth @if(auth()->user()->isAdmin())
+            <div class="bg-white rounded-xl border border-amber-200 overflow-hidden" x-data="{ editOpen: false }">
+                <button type="button" @click="editOpen = !editOpen"
+                        class="w-full flex items-center justify-between px-5 py-3 text-sm font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 transition-colors">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        Edit Candidate Marks
+                    </span>
+                    <svg class="w-4 h-4 text-amber-600 transition-transform" :class="editOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+
+                <div x-show="editOpen" x-transition class="border-t border-amber-100">
+                    <form action="{{ route('admin.students.self-scores', $student) }}" method="POST" class="p-4 space-y-4">
+                        @csrf
+                        @method('PUT')
+
+                        @php $editRubricConf = config('rubric.caac'); @endphp
+                        @foreach($editRubricConf as $dimKey => $dim)
+                        @php
+                            $dimRubricItems = $rubricItems->filter(fn($i) => $i->dimension === $dimKey)->values();
+                        @endphp
+                        <div>
+                            <p class="text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">{{ $dim['label'] }}</p>
+                            <div class="space-y-2">
+                                @foreach($dimRubricItems as $item)
+                                @php
+                                    $existing = $selfScoreMap->get($item->id);
+                                    $currentScore   = $existing?->score ?? 0;
+                                    $currentRemarks = $existing?->remarks ?? '';
+                                @endphp
+                                <div class="bg-slate-50 rounded-lg p-3">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <p class="text-xs font-medium text-slate-700 leading-tight">{{ $item->sub_indicator_label }}</p>
+                                        <span class="text-xs text-slate-400 shrink-0 ml-2">max {{ $item->max_score }}</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <input type="number"
+                                               name="self_scores[{{ $item->id }}][score]"
+                                               value="{{ $currentScore }}"
+                                               min="0" max="{{ $item->max_score }}" step="0.5"
+                                               class="w-20 text-center border border-slate-200 rounded-lg px-2 py-1 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-400"
+                                               required>
+                                        <input type="text"
+                                               name="self_scores[{{ $item->id }}][remarks]"
+                                               value="{{ $currentRemarks }}"
+                                               placeholder="Remarks (optional)"
+                                               class="flex-1 border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400">
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endforeach
+
+                        <button type="submit"
+                                class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors">
+                            Save Candidate Marks
+                        </button>
+                    </form>
+                </div>
+            </div>
+            @endif @endauth
 
         </div>{{-- end left --}}
 

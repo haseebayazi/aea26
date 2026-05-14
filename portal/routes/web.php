@@ -61,6 +61,9 @@ Route::middleware(['auth.portal'])->group(function () {
         Route::post('/admin/users/{user}/toggle', [UserController::class, 'toggleActive'])->name('admin.users.toggle');
         Route::post('/admin/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('admin.users.reset-password');
 
+        // Admin edit candidate self-scores
+        Route::put('/admin/students/{student}/self-scores', [StudentController::class, 'updateSelfScores'])->name('admin.students.self-scores');
+
         // File uploads
         Route::post('/students/{student}/files', [FileController::class, 'upload'])->name('students.files.upload');
         Route::delete('/files/{file}', [FileController::class, 'destroy'])->name('files.destroy');
