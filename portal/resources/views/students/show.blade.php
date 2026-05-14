@@ -503,7 +503,6 @@
                     <span class="text-sm font-bold text-blue-800">{{ number_format($avgTotal, 1) }}</span>
                 </div>
                 @endif
-                </div>
             </div>
             @endif
 
