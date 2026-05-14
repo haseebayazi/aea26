@@ -15,7 +15,11 @@ class StudentController extends Controller
     {
         $user = Auth::user();
 
-        $query = Student::with(['category', 'selfScores'])
+        $query = Student::with([
+                'category',
+                'selfScores',
+                'reviews' => fn($q) => $q->where('status', 'completed')->with('scores'),
+            ])
             ->withCount('reviews as total_reviews')
             ->withCount(['reviews as completed_reviews' => fn($q) => $q->where('status', 'completed')]);
 
@@ -32,9 +36,12 @@ class StudentController extends Controller
             ->whereIn('student_id', $students->pluck('id'))
             ->pluck('status', 'student_id');
 
-        $students->each(function ($student) use ($myReviewMap, $user) {
-            $student->my_review_status = $myReviewMap->get($student->id, 'not_started');
-            $student->self_score_total = $student->selfScores->sum('score');
+        $students->each(function ($student) use ($myReviewMap) {
+            $student->my_review_status   = $myReviewMap->get($student->id, 'not_started');
+            $student->self_score_total   = $student->selfScores->sum('score');
+            $student->avg_reviewer_score = $student->reviews->isNotEmpty()
+                ? round($student->reviews->map(fn($r) => $r->scores->sum('score'))->avg(), 2)
+                : null;
         });
 
         $categories = $user->isAdmin()

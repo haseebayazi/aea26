@@ -59,9 +59,9 @@
                 <option value="in_progress">In Progress</option>
                 <option value="completed">Completed</option>
             </select>
-            <button @click="sortDir = sortDir === 'asc' ? 'desc' : 'asc'"
-                    class="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50">
-                Sort: <span x-text="sortCol === 'self_score' ? 'Self Score' : 'ID'"></span>
+            <button @click="cycleSortCol()"
+                    class="px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50 whitespace-nowrap">
+                Sort: <span x-text="sortLabels[sortCol]"></span>
                 <span x-text="sortDir === 'asc' ? '↑' : '↓'"></span>
             </button>
         </div>
@@ -79,7 +79,13 @@
                         <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden md:table-cell">Category</th>
                         <th class="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Dept/Campus</th>
                         <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide cursor-pointer"
-                            @click="setSort('self_score')">Self Score</th>
+                            @click="setSort('self_score')">
+                            Self Score <span x-show="sortCol === 'self_score'" x-text="sortDir === 'asc' ? '↑' : '↓'" class="text-blue-500"></span>
+                        </th>
+                        <th class="text-right px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide cursor-pointer hidden sm:table-cell"
+                            @click="setSort('review_score')">
+                            Review Score <span x-show="sortCol === 'review_score'" x-text="sortDir === 'asc' ? '↑' : '↓'" class="text-blue-500"></span>
+                        </th>
                         <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">My Status</th>
                         @auth @if(auth()->user()->isAdmin())
                         <th class="text-center px-4 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wide hidden lg:table-cell">Reviews</th>
@@ -94,6 +100,7 @@
                         data-status="{{ $student->my_review_status }}"
                         data-search="{{ strtolower($student->submission_id . ' ' . $student->name . ' ' . $student->department . ' ' . $student->campus) }}"
                         data-self-score="{{ $student->self_score_total }}"
+                        data-review-score="{{ $student->avg_reviewer_score ?? -1 }}"
                         data-submission-id="{{ $student->submission_id }}">
                         <td class="px-4 py-3 text-slate-500 text-xs">{{ $student->submission_id }}</td>
                         <td class="px-4 py-3">
@@ -115,6 +122,14 @@
                         <td class="px-4 py-3 text-right">
                             <span class="font-semibold text-slate-700">{{ number_format($student->self_score_total, 1) }}</span>
                             <span class="text-slate-400 text-xs">/100</span>
+                        </td>
+                        <td class="px-4 py-3 text-right hidden sm:table-cell">
+                            @if($student->avg_reviewer_score !== null)
+                            <span class="font-semibold text-blue-700">{{ number_format($student->avg_reviewer_score, 1) }}</span>
+                            <span class="text-slate-400 text-xs">/100</span>
+                            @else
+                            <span class="text-slate-300 text-xs">—</span>
+                            @endif
                         </td>
                         <td class="px-4 py-3 text-center">
                             @if($student->my_review_status === 'completed')
@@ -169,6 +184,8 @@ function studentList() {
         search: '',
         sortCol: 'submission_id',
         sortDir: 'asc',
+        sortCols: ['submission_id', 'self_score', 'review_score'],
+        sortLabels: { submission_id: 'ID', self_score: 'Self Score', review_score: 'Review Score' },
         rows: [],
 
         init() {
@@ -176,7 +193,6 @@ function studentList() {
             this.$watch('activeCategory', () => this.filter());
             this.$watch('activeStatus', () => this.filter());
             this.$watch('search', () => this.filter());
-            this.$watch('sortDir', () => this.sortRows());
         },
 
         setSort(col) {
@@ -184,8 +200,15 @@ function studentList() {
                 this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
             } else {
                 this.sortCol = col;
-                this.sortDir = 'asc';
+                this.sortDir = 'desc';
             }
+            this.sortRows();
+        },
+
+        cycleSortCol() {
+            const idx = this.sortCols.indexOf(this.sortCol);
+            this.sortCol = this.sortCols[(idx + 1) % this.sortCols.length];
+            this.sortDir = this.sortCol === 'submission_id' ? 'asc' : 'desc';
             this.sortRows();
         },
 
@@ -219,6 +242,9 @@ function studentList() {
                 if (this.sortCol === 'self_score') {
                     va = parseFloat(a.dataset.selfScore);
                     vb = parseFloat(b.dataset.selfScore);
+                } else if (this.sortCol === 'review_score') {
+                    va = parseFloat(a.dataset.reviewScore);
+                    vb = parseFloat(b.dataset.reviewScore);
                 } else {
                     va = parseInt(a.dataset.submissionId);
                     vb = parseInt(b.dataset.submissionId);
